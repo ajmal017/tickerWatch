@@ -35,11 +35,11 @@ fig2 = go.Figure()
 layout_children = [
     html.H1('Stock Tickers'),
 
-    dcc.Input(
+    html.P(children=["Enter a ticker here if you can't find it in the dropdown: ", dcc.Input(
         id='input-field',
-        value='MSFT',
+        value='TSLA',
         debounce=True
-    ),
+    )]),
 
     dcc.Dropdown(
         id='dropdown',
@@ -52,10 +52,17 @@ layout_children = [
     dcc.Graph(
         id='stock-plot',
         figure=fig2
-    )
+    ),
+
+    html.Div(id='container', children=[])
 
 ]
 app.layout = html.Div(children=layout_children)
+
+
+def add_component_to_container(component):
+
+
 
 @app.callback(
     Output('dropdown', 'options'),
@@ -105,6 +112,12 @@ def update_graph(prop):
     else:
         fig = go.Figure()
         return fig
+
+@app.callback(
+    Output('',''), 
+    [Input('','')]
+)
+
 
 if __name__ == '__main__':
     # open server and host app
