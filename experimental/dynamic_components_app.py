@@ -3,6 +3,7 @@ from dash.dependencies import Input, Output, State, ALL, MATCH
 import dash_html_components as html
 import dash_core_components as dcc
 import plotly.express as px
+import yfinance as yf
 
 df = px.data.gapminder()
 
