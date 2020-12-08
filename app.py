@@ -3,7 +3,7 @@ import sys
 sys.path.append('src/')
 import pandas as pd
 import math
-import yfinance_helpers
+from yfinance_helpers import *
 
 import dash
 import dash_core_components as dcc
@@ -20,7 +20,7 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 # Create some stuff to be displayed
-master_df = yfinance_helpers.get_master_stock_data()
+master_df = get_master_stock_data()
 company_names = [
     'Google',
     'Apple', 
@@ -31,48 +31,58 @@ company_names = [
     'Spotify',
     'Tesla'
 ]
+company_tickers = []
 dropdown_options = []
-for (co, ticker) in zip(company_names, master_df.columns):
-    option = {'label': co, 'value': ticker}
+for ticker in company_names:
+    option = {'label': ticker, 'value': ticker}
     dropdown_options.append(option)
 
-fig = go.Figure()
+fig1 = go.Figure()
+fig2 = go.Figure()
 
 # Layout
-app.layout = html.Div(children=[
+layout_children = [
     html.H1('Stock Tickers'),
+
+    dcc.Input(
+        id='input-field',
+        value='MSFT',
+        multiple=True,
+        debounce=True
+    ),
 
     html.H3(id='current-stock'),
 
     dcc.Graph(
         id='stock-plot',
-        figure=fig
-        ),
-
-    dcc.Dropdown(
-        id='dropdown',
-        options = dropdown_options,
-        value='MSFT'
+        figure=fig2
     )
-])
+
+]
+app.layout = html.Div(children=layout_children)
+
 
 @app.callback(
     Output('current-stock', 'children'),
-    [Input('dropdown', 'value')]
+    [Input('input-field', 'value')]
 )
 def update_small_header(prop):
+    
+    print(prop)
     return f'{prop}'
 
 @app.callback(
     Output('stock-plot', 'figure'), 
-    [Input('dropdown', 'value')]
+    [Input('input-field', 'value')]
 )
 def update_graph(prop):
+    print(prop)
     fig = go.Figure()
-    fig.add_trace(go.Line(
+    fig.add_trace(go.Scatter(
         x=master_df.index, 
         y=master_df[prop], 
-        name=prop
+        name=prop,
+        mode='lines'
         ))
     return fig
 
