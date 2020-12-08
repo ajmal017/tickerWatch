@@ -43,25 +43,25 @@ layout_children = [
 
     dcc.Dropdown(
         id='dropdown',
-        options=dropdown_options,
-        multi=True
+        value=['TSLA'],
+        multi=True,
+        options=dropdown_options
+    ),
+
+    html.Button(
+        'Add plot',
+        id='add-plot-button', 
+        n_clicks=0,
+        style={'display': 'inline-block'},
+
     ),
 
     html.H3(id='current-stock'),
-
-    dcc.Graph(
-        id='stock-plot',
-        figure=fig2
-    ),
 
     html.Div(id='container', children=[])
 
 ]
 app.layout = html.Div(children=layout_children)
-
-
-def add_component_to_container(component):
-
 
 
 @app.callback(
@@ -75,48 +75,20 @@ def update_dropdown(prop):
 
 
 @app.callback(
-    Output('current-stock', 'children'),
-    [Input('dropdown', 'value')]
+    Output('container', 'children'), # not read as input when using state
+    [Input('add-plot-button', 'n_clicks')], # first value read to input
+    [State('container', 'children'), # same property as output, treat as output variable
+    State('dropdown', 'value')]
 )
-def update_small_header(prop):
-    return f'{prop}'
-
-@app.callback(
-    Output('stock-plot', 'figure'), 
-    [Input('dropdown', 'value')]
-)
-def update_graph(prop):
-    print(prop)
-    if prop:
-        fig = make_subplots(rows=len(prop), cols=1)
-        r = 1
-        for p in prop:
-            df = get_stock_data(p)
-            fig.add_trace(go.Scatter(
-                x=df.index, 
-                y=df.Close, 
-                name=p,
-                mode='lines'
-                ), row=r, col=1)
-            r += 1
-        return fig
-    # else:
-    #     df = get_stock_data(prop)
-    #     fig.add_trace(go.Scatter(
-    #         x=df.index, 
-    #         y=df.Close, 
-    #         name=prop,
-    #         mode='lines'
-    #     ), row=1, col=1)
-
-    else:
-        fig = go.Figure()
-        return fig
-
-@app.callback(
-    Output('',''), 
-    [Input('','')]
-)
+def add_component_to_container(n_clicks, children, dropdown_vals):
+    print(n_clicks, children, dropdown_vals)
+    children.append(
+        html.Div(
+            style={'width': '23%', 'display': 'inline-block', 'outline': 'thin lightgrey solid', 'padding': 10},
+            children=[html.Div(children=ticker, id=ticker) for ticker in dropdown_vals]
+        )
+    )
+    return children
 
 
 if __name__ == '__main__':
