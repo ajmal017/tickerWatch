@@ -4,6 +4,7 @@ sys.path.append('src/')
 import pandas as pd
 import math
 from yfinance_helpers import *
+import yfinance
 
 import dash
 import dash_core_components as dcc
@@ -18,7 +19,8 @@ import plotly.express as px
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
+print(type(['blah', 'blh']))
+print(type('blah'))
 # Create some stuff to be displayed
 master_df = get_master_stock_data()
 company_names = [
@@ -33,7 +35,7 @@ company_names = [
 ]
 company_tickers = []
 dropdown_options = []
-for ticker in company_names:
+for ticker in dropdown_options:
     option = {'label': ticker, 'value': ticker}
     dropdown_options.append(option)
 
@@ -47,8 +49,13 @@ layout_children = [
     dcc.Input(
         id='input-field',
         value='MSFT',
-        multiple=True,
         debounce=True
+    ),
+
+    dcc.Dropdown(
+        id='dropdown',
+        value='MSFT',
+        multi=True
     ),
 
     html.H3(id='current-stock'),
@@ -61,29 +68,51 @@ layout_children = [
 ]
 app.layout = html.Div(children=layout_children)
 
+@app.callback(
+    Output('dropdown', 'options'),
+    [Input('input-field', 'value')]
+)
+def update_dropdown(prop):
+    if prop not in dropdown_options:
+        dropdown_options.append(prop)
+    print(dropdown_options)
+    return [{'label':i,'value':i} for i in dropdown_options]
+
 
 @app.callback(
     Output('current-stock', 'children'),
-    [Input('input-field', 'value')]
+    [Input('dropdown', 'value')]
 )
 def update_small_header(prop):
-    
-    print(prop)
     return f'{prop}'
 
 @app.callback(
     Output('stock-plot', 'figure'), 
-    [Input('input-field', 'value')]
+    [Input('dropdown', 'value')]
 )
 def update_graph(prop):
-    print(prop)
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=master_df.index, 
-        y=master_df[prop], 
-        name=prop,
-        mode='lines'
-        ))
+    fig = make_subplots(rows=len(prop), cols=1)
+    if type(prop)=='list':
+        r = 1
+        for p in prop:
+            df = get_stock_data(p)
+            fig.add_trace(go.Scatter(
+                x=df.index, 
+                y=df.Close, 
+                name=p,
+                mode='lines'
+                ), row=r, col=1)
+            r += 1
+        fig.update_layout(height=600, width=800)
+    else:
+        df = get_stock_data(prop)
+        fig.add_trace(go.Scatter(
+            x=df.index, 
+            y=df.Close, 
+            name=prop,
+            mode='lines'
+        ), row=1, col=1)
+
     return fig
 
 if __name__ == '__main__':
