@@ -19,10 +19,10 @@ import plotly.express as px
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-print(type(['blah', 'blh']))
-print(type('blah'))
+
 # Create some stuff to be displayed
 master_df = get_master_stock_data()
+
 company_names = [
     'Google',
     'Apple', 

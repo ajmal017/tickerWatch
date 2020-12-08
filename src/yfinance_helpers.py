@@ -1,11 +1,18 @@
 import yfinance as yf
+from get_all_tickers import get_tickers as gt
 import pandas as pd
+import re
+
+ticker_filter = re.compile('^[A-Z]+$')
+master_ticker_list = gt.get_tickers()
+master_ticker_list = [x for x in master_ticker_list if ticker_filter.match(x)]
 
 def get_master_stock_data(stocks=None):
     if stocks:
         cos = stocks
     else:
-        cos = ['GOOG', 'AAPL', 'AMZN', 'FB', 'NFLX', 'MSFT', 'SPOT', 'TSLA']
+        cos = master_ticker_list
+        print(master_ticker_list)
 
     closes = []
 
@@ -14,6 +21,7 @@ def get_master_stock_data(stocks=None):
         closes.append(series)
 
     master = pd.concat(closes, axis=1)
+    print(master.shape)
     return master
 
 def get_stock_data(tickerSymbol='MSFT', period='1d'):
