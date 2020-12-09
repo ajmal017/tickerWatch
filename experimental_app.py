@@ -33,13 +33,55 @@ fig2 = go.Figure()
 
 # Layout
 layout_children = [
-    html.H1('Stock Tickers'),
+    html.H1('TickerWatch'),
 
-    html.P(children=["Enter a ticker here if you can't find it in the dropdown: ", dcc.Input(
-        id='input-field',
-        value='TSLA',
-        debounce=True
-    )]),
+    html.H6('Look up and compare historic closes for stocks on your watch list'),
+
+    html.Div(
+        style={'width': '39%', 'display': 'inline-block', 'outline': 'thin lightgrey solid', 'padding': 10, 'margin':'4.5%'},
+        children=[
+            html.Div(children=[
+                html.P('Lookup symbol by company name: '),
+                dcc.Input(
+                    id='lookup-symbol-input-field',
+                    debounce=True
+                ),
+                html.Button('Lookup Symbol')
+            ])]
+    ),
+
+    html.Div(
+        style={'width': '39%', 'display': 'inline-block', 'outline': 'thin lightgrey solid', 'padding': 10, 'margin':'4.5%'},
+        children=[
+            html.Div(children=[
+                html.P('Enter a ticker here if you can\'t find it in the dropdown: '), 
+                dcc.Input(
+                    id='add-ticker-input-field',
+                debounce=True),
+                html.Button(
+                    'Add Ticker',
+                    id='add-ticker-button',
+                    n_clicks=0,
+                    style={'display': 'inline-block'}
+            )])
+        ]
+    ),
+    
+    # html.Div(children=[
+    #             html.P('Enter a ticker here if you can\'t find it in the dropdown: '), 
+    #             dcc.Input(
+    #                 id='add-ticker-input-field',
+    #             debounce=True),
+    #         html.Button(
+    #             'Add Ticker',
+    #             id='add-ticker-button',
+    #             n_clicks=0,
+    #             style={'display': 'inline-block'}
+    #         )]
+    # ),
+        
+
+    html.P('Select tickers from the drop down and press "SHOW PLOTS" to get trends'),
 
     dcc.Dropdown(
         id='dropdown',
@@ -49,11 +91,10 @@ layout_children = [
     ),
 
     html.Button(
-        'Add plot',
+        'Show Plots',
         id='add-plot-button', 
         n_clicks=0,
-        style={'display': 'inline-block'},
-
+        style={'display': 'inline-block'}
     ),
 
     html.H3(id='current-stock'),
@@ -66,29 +107,47 @@ app.layout = html.Div(children=layout_children)
 
 @app.callback(
     Output('dropdown', 'options'),
-    [Input('input-field', 'value')]
+    [Input('add-ticker-button', 'n_clicks')],
+    [State('dropdown', 'options'),
+    State('add-ticker-input-field', 'value')]
 )
-def update_dropdown(prop):
-    if prop not in dropdown_options:
-        dropdown_options.append({'label':prop, 'value':prop})
-    return dropdown_options
+def update_dropdown(n_clicks, options, value):
+    if value:
+        if {'label':value, 'value':value} not in options:
+            options.append({'label':value, 'value':value})
+        return options
+    else:
+        return options
 
 
+current_div_ids = []
 @app.callback(
     Output('container', 'children'), # not read as input when using state
     [Input('add-plot-button', 'n_clicks')], # first value read to input
     [State('container', 'children'), # same property as output, treat as output variable
     State('dropdown', 'value')]
 )
-def add_component_to_container(n_clicks, children, dropdown_vals):
+def update_container(n_clicks, children, dropdown_vals):
     print(n_clicks, children, dropdown_vals)
-    children.append(
-        html.Div(
-            style={'width': '23%', 'display': 'inline-block', 'outline': 'thin lightgrey solid', 'padding': 10},
-            children=[html.Div(children=ticker, id=ticker) for ticker in dropdown_vals]
+    children = []
+    for ticker in dropdown_vals:
+        df = get_stock_data(ticker)
+        current_div_ids.append(f'{ticker}-div')
+        fig = px.line(df, x=df.index, y='Close', title=ticker)
+        children.append(
+            html.Div(
+                id=f'{ticker}-div',
+                style={'width': '39%', 'display': 'inline-block', 'outline': 'thin lightgrey solid', 'padding': 10, 'margin':'4.5%'},
+                children=[
+                    dcc.Graph(
+                        id=f'{ticker}-graph',
+                        figure=fig
+                    )
+                ]
+            )
         )
-    )
     return children
+
 
 
 if __name__ == '__main__':

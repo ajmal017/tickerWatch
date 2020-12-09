@@ -1,7 +1,10 @@
+import requests
+import re
+
 import yfinance as yf
 from get_all_tickers import get_tickers as gt
 import pandas as pd
-import re
+
 
 
 def get_ticker_list():
@@ -50,3 +53,16 @@ def get_stock_data_for_period(tickerSymbol='MSFT', start_date='2010-1-1', end_da
 
     # return data
     return tickerDf
+
+
+
+
+def get_name_from_symbol(symbol):
+    url = "http://d.yimg.com/autoc.finance.yahoo.com/autoc?query={}&region=1&lang=en".format(symbol)
+
+    result = requests.get(url).json()
+
+    for x in result['ResultSet']['Result']:
+        if x['symbol'] == symbol:
+            return x['name']
+    return symbol
