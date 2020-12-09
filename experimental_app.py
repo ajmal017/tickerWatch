@@ -128,10 +128,9 @@ current_div_ids = []
     State('dropdown', 'value')]
 )
 def update_container(n_clicks, children, dropdown_vals):
-    print(n_clicks, children, dropdown_vals)
     children = []
     for ticker in dropdown_vals:
-        df = get_stock_data(ticker)
+        df = get_stock_data(ticker, 'ytd')
         current_div_ids.append(f'{ticker}-div')
         fig = px.line(df, x=df.index, y='Close', title=ticker)
         children.append(

@@ -24,7 +24,7 @@ def get_stock_data(tickerSymbol='MSFT', period='1d'):
         interval = '1m'
     elif period=='1mo':
         interval = '5m'
-    elif period in ['3mo','6mo','1y','2y']:
+    elif period in ['3mo','6mo','ytd','1y','2y']:
         interval = '1h'
     elif period in ['5y','10y','max']:
         interval = '1d'
