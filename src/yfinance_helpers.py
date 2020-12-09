@@ -1,20 +1,17 @@
+import requests
+import re
+
 import yfinance as yf
+from get_all_tickers import get_tickers as gt
 import pandas as pd
 
-def get_master_stock_data(stocks=None):
-    if stocks:
-        cos = stocks
-    else:
-        cos = ['GOOG', 'AAPL', 'AMZN', 'FB', 'NFLX', 'MSFT', 'SPOT', 'TSLA']
 
-    closes = []
 
-    for co in cos:
-        series = yf.Ticker(co).history(period='1y').rename({'Close':co}, axis=1)[co]
-        closes.append(series)
-
-    master = pd.concat(closes, axis=1)
-    return master
+def get_ticker_list():
+    ticker_filter = re.compile('^[A-Z]+$')
+    master_ticker_list = gt.get_tickers()
+    master_ticker_list = [x for x in master_ticker_list if ticker_filter.match(x)]
+    return master_ticker_list
 
 def get_stock_data(tickerSymbol='MSFT', period='1d'):
     '''
@@ -56,3 +53,16 @@ def get_stock_data_for_period(tickerSymbol='MSFT', start_date='2010-1-1', end_da
 
     # return data
     return tickerDf
+
+
+
+
+def get_name_from_symbol(symbol):
+    url = "http://d.yimg.com/autoc.finance.yahoo.com/autoc?query={}&region=1&lang=en".format(symbol)
+
+    result = requests.get(url).json()
+
+    for x in result['ResultSet']['Result']:
+        if x['symbol'] == symbol:
+            return x['name']
+    return symbol

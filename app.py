@@ -19,23 +19,12 @@ import plotly.express as px
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-print(type(['blah', 'blh']))
-print(type('blah'))
+
 # Create some stuff to be displayed
-master_df = get_master_stock_data()
-company_names = [
-    'Google',
-    'Apple', 
-    'Amazon', 
-    'Facebook',
-    'Netflix',
-    'Microsoft',
-    'Spotify',
-    'Tesla'
-]
-company_tickers = []
+master_ticker_list = get_ticker_list()
+
 dropdown_options = []
-for ticker in dropdown_options:
+for ticker in master_ticker_list:
     option = {'label': ticker, 'value': ticker}
     dropdown_options.append(option)
 
@@ -54,7 +43,7 @@ layout_children = [
 
     dcc.Dropdown(
         id='dropdown',
-        value='MSFT',
+        options=dropdown_options,
         multi=True
     ),
 
@@ -74,9 +63,8 @@ app.layout = html.Div(children=layout_children)
 )
 def update_dropdown(prop):
     if prop not in dropdown_options:
-        dropdown_options.append(prop)
-    print(dropdown_options)
-    return [{'label':i,'value':i} for i in dropdown_options]
+        dropdown_options.append({'label':prop, 'value':prop})
+    return dropdown_options
 
 
 @app.callback(
@@ -91,8 +79,9 @@ def update_small_header(prop):
     [Input('dropdown', 'value')]
 )
 def update_graph(prop):
-    fig = make_subplots(rows=len(prop), cols=1)
-    if type(prop)=='list':
+    print(prop)
+    if prop:
+        fig = make_subplots(rows=len(prop), cols=1)
         r = 1
         for p in prop:
             df = get_stock_data(p)
@@ -103,17 +92,19 @@ def update_graph(prop):
                 mode='lines'
                 ), row=r, col=1)
             r += 1
-        fig.update_layout(height=600, width=800)
-    else:
-        df = get_stock_data(prop)
-        fig.add_trace(go.Scatter(
-            x=df.index, 
-            y=df.Close, 
-            name=prop,
-            mode='lines'
-        ), row=1, col=1)
+        return fig
+    # else:
+    #     df = get_stock_data(prop)
+    #     fig.add_trace(go.Scatter(
+    #         x=df.index, 
+    #         y=df.Close, 
+    #         name=prop,
+    #         mode='lines'
+    #     ), row=1, col=1)
 
-    return fig
+    else:
+        fig = go.Figure()
+        return fig
 
 if __name__ == '__main__':
     # open server and host app
