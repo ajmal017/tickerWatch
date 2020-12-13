@@ -33,78 +33,121 @@ fig2 = go.Figure()
 
 # Layout
 layout_children = [
-    html.H1('Stock Tickers'),
+    html.H1('TickerWatch'),
 
-    dcc.Input(
-        id='input-field',
-        value='MSFT',
-        debounce=True
+    html.H6('Look up and compare historic closes for stocks on your watch list'),
+
+    html.Div(
+        style={'width': '39%', 'display': 'inline-block', 'outline': 'thin lightgrey solid', 'padding': 10, 'margin':'4.5%'},
+        children=[
+            html.Div(children=[
+                html.P('Lookup symbol by company name: '),
+                dcc.Input(
+                    id='lookup-symbol-input-field',
+                    debounce=True
+                ),
+                html.Button('Lookup Symbol')
+            ])]
     ),
+
+    html.Div(
+        style={'width': '39%', 'display': 'inline-block', 'outline': 'thin lightgrey solid', 'padding': 10, 'margin':'4.5%'},
+        children=[
+            html.Div(children=[
+                html.P('Enter a ticker here if you can\'t find it in the dropdown: '), 
+                dcc.Input(
+                    id='add-ticker-input-field',
+                debounce=True),
+                html.Button(
+                    'Add Ticker',
+                    id='add-ticker-button',
+                    n_clicks=0,
+                    style={'display': 'inline-block'}
+            )])
+        ]
+    ),
+    
+    # html.Div(children=[
+    #             html.P('Enter a ticker here if you can\'t find it in the dropdown: '), 
+    #             dcc.Input(
+    #                 id='add-ticker-input-field',
+    #             debounce=True),
+    #         html.Button(
+    #             'Add Ticker',
+    #             id='add-ticker-button',
+    #             n_clicks=0,
+    #             style={'display': 'inline-block'}
+    #         )]
+    # ),
+        
+
+    html.P('Select tickers from the drop down and press "SHOW PLOTS" to get trends'),
 
     dcc.Dropdown(
         id='dropdown',
-        options=dropdown_options,
-        multi=True
+        value=['TSLA'],
+        multi=True,
+        options=dropdown_options
+    ),
+
+    html.Button(
+        'Show Plots',
+        id='add-plot-button', 
+        n_clicks=0,
+        style={'display': 'inline-block'}
     ),
 
     html.H3(id='current-stock'),
 
-    dcc.Graph(
-        id='stock-plot',
-        figure=fig2
-    )
+    html.Div(id='container', children=[])
 
 ]
 app.layout = html.Div(children=layout_children)
 
+
 @app.callback(
     Output('dropdown', 'options'),
-    [Input('input-field', 'value')]
+    [Input('add-ticker-button', 'n_clicks')],
+    [State('dropdown', 'options'),
+    State('add-ticker-input-field', 'value')]
 )
-def update_dropdown(prop):
-    if prop not in dropdown_options:
-        dropdown_options.append({'label':prop, 'value':prop})
-    return dropdown_options
-
-
-@app.callback(
-    Output('current-stock', 'children'),
-    [Input('dropdown', 'value')]
-)
-def update_small_header(prop):
-    return f'{prop}'
-
-@app.callback(
-    Output('stock-plot', 'figure'), 
-    [Input('dropdown', 'value')]
-)
-def update_graph(prop):
-    print(prop)
-    if prop:
-        fig = make_subplots(rows=len(prop), cols=1)
-        r = 1
-        for p in prop:
-            df = get_stock_data(p)
-            fig.add_trace(go.Scatter(
-                x=df.index, 
-                y=df.Close, 
-                name=p,
-                mode='lines'
-                ), row=r, col=1)
-            r += 1
-        return fig
-    # else:
-    #     df = get_stock_data(prop)
-    #     fig.add_trace(go.Scatter(
-    #         x=df.index, 
-    #         y=df.Close, 
-    #         name=prop,
-    #         mode='lines'
-    #     ), row=1, col=1)
-
+def update_dropdown(n_clicks, options, value):
+    if value:
+        if {'label':value, 'value':value} not in options:
+            options.append({'label':value, 'value':value})
+        return options
     else:
-        fig = go.Figure()
-        return fig
+        return options
+
+
+current_div_ids = []
+@app.callback(
+    Output('container', 'children'), # not read as input when using state
+    [Input('add-plot-button', 'n_clicks')], # first value read to input
+    [State('container', 'children'), # same property as output, treat as output variable
+    State('dropdown', 'value')]
+)
+def update_container(n_clicks, children, dropdown_vals):
+    children = []
+    for ticker in dropdown_vals:
+        df = get_stock_data(ticker, 'ytd')
+        current_div_ids.append(f'{ticker}-div')
+        fig = px.line(df, x=df.index, y='Close', title=ticker)
+        children.append(
+            html.Div(
+                id=f'{ticker}-div',
+                style={'width': '39%', 'display': 'inline-block', 'outline': 'thin lightgrey solid', 'padding': 10, 'margin':'4.5%'},
+                children=[
+                    dcc.Graph(
+                        id=f'{ticker}-graph',
+                        figure=fig
+                    )
+                ]
+            )
+        )
+    return children
+
+
 
 if __name__ == '__main__':
     # open server and host app

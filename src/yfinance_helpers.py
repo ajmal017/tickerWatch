@@ -6,12 +6,12 @@ from get_all_tickers import get_tickers as gt
 import pandas as pd
 
 
-
 def get_ticker_list():
     ticker_filter = re.compile('^[A-Z]+$')
     master_ticker_list = gt.get_tickers()
     master_ticker_list = [x for x in master_ticker_list if ticker_filter.match(x)]
     return master_ticker_list
+
 
 def get_stock_data(tickerSymbol='MSFT', period='1d'):
     '''
@@ -37,6 +37,7 @@ def get_stock_data(tickerSymbol='MSFT', period='1d'):
 
     return tickerDf
 
+
 def get_stock_data_for_period(tickerSymbol='MSFT', start_date='2010-1-1', end_date='2020-1-25'):
     '''
     Returns trend data for the provided stock 
@@ -55,8 +56,6 @@ def get_stock_data_for_period(tickerSymbol='MSFT', start_date='2010-1-1', end_da
     return tickerDf
 
 
-
-
 def get_name_from_symbol(symbol):
     url = "http://d.yimg.com/autoc.finance.yahoo.com/autoc?query={}&region=1&lang=en".format(symbol)
 
@@ -65,4 +64,15 @@ def get_name_from_symbol(symbol):
     for x in result['ResultSet']['Result']:
         if x['symbol'] == symbol:
             return x['name']
+    return symbol
+
+
+def get_symbol_from_name(name):
+    url = "http://d.yimg.com/autoc.finance.yahoo.com/autoc?query={}&region=1&lang=en".format(symbol)
+
+    result = requests.get(url).json()
+
+    for x in result['ResultSet']['Result']:
+        if x['name'] == name:
+            return x['symbol']
     return symbol
